@@ -1,7 +1,7 @@
 import torch
 from torchvision import transforms
 
-hr_dir = 'DIV2K_valid_HR/'
+hr_dir = 'data/DIV2K_valid_HR/'
 
 SCALING_FACTOR = 4
 CROP_DIM = 648
