@@ -52,7 +52,7 @@ class DIV2KDataset(Dataset):
 
 if __name__ == '__main__':
 
-    ds = DIV2KDataset(config.hr_dir)
+    ds = DIV2KDataset(config.train_dir)
     for lr, hr in ds:
         plt.imshow(hr.permute(1, 2, 0).detach().numpy()+0.5)
         plt.show()

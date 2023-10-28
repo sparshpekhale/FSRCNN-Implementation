@@ -1,7 +1,8 @@
 import torch
 from torchvision import transforms
 
-hr_dir = 'data/DIV2K_valid_HR/'
+train_dir = 'data/DIV2K_train_HR/'
+valid_dir = 'data/DIV2K_valid_HR/'
 
 SCALING_FACTOR = 4
 CROP_DIM = 648
@@ -13,7 +14,9 @@ transform = transforms.Compose([
 ])
 
 BATCH_SIZE = 4
-EPOCHS = 3
+EPOCHS = 500
 LEARNING_RATE = 0.001
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
+ckpt = None
