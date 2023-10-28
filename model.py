@@ -2,6 +2,8 @@ import torch
 from torch import nn
 import lightning as pl
 from torch.nn import functional as F
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 
 from utils import MSE_PSNR
 import config
@@ -72,7 +74,7 @@ class FSRCNN(pl.LightningModule):
     
     def on_validation_epoch_end(self):
         avg_loss = torch.stack(self.val_losses).mean()
-        self.log('val_mse', avg_loss)
+        self.log('val_mse', avg_loss, prog_bar=True)
         self.val_losses.clear()
 
         avg_psnr = torch.stack(self.val_psnr).mean()
@@ -80,5 +82,32 @@ class FSRCNN(pl.LightningModule):
         self.val_psnr.clear()
     
     def configure_optimizers(self):
-        return torch.optim.RMSprop(self.model.parameters(), lr=config.LEARNING_RATE)
+        optim = torch.optim.RMSprop(self.model.parameters(), lr=config.LEARNING_RATE)
+        scheduler = ReduceLROnPlateau(optim, mode='min', factor=0.5, patience=20, min_lr=10e-6, verbose=True)
+
+        return {
+            'optimizer': optim,
+            'lr_scheduler': {
+                'scheduler': scheduler,
+                'monitor': 'train_mse'
+            }
+        }
+
+    def configure_callbacks(self):
+        early_stopping =  EarlyStopping(
+            monitor='val_mse',
+            min_delta=10e-6,
+            patience=40,
+            verbose=True
+        )
+
+        checkpoints = ModelCheckpoint(
+            './checkpoints',
+            every_n_epochs=3,
+            filename='{epoch}-{val_psnr:.2f}',
+            monitor='val_psnr',
+            mode='max'
+        )
+
+        return [early_stopping, checkpoints]
     
