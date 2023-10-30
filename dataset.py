@@ -29,8 +29,8 @@ class DIV2KDataset(Dataset):
         
         # Randomly crop image
         w, h = hr.size
-        rand_w = np.random.randint(0, w-config.CROP_DIM)
-        rand_h = np.random.randint(0, h-config.CROP_DIM)
+        rand_w = np.random.randint(0, max(1, w-config.CROP_DIM))
+        rand_h = np.random.randint(0, max(1, h-config.CROP_DIM))
         
         hr = hr.crop((rand_w, rand_h, rand_w+config.CROP_DIM, rand_h+config.CROP_DIM))
         
