@@ -32,6 +32,8 @@ class FSRCNN(pl.LightningModule):
         self.model.append(nn.ConvTranspose2d(self.d, 3, kernel_size=9,stride=config.SCALING_FACTOR,
                                           padding=9//2, output_padding=config.SCALING_FACTOR-1))
         
+        self.model.append(nn.Sigmoid())
+        
 
         self.mse_psnr = MSE_PSNR()
 
@@ -43,8 +45,9 @@ class FSRCNN(pl.LightningModule):
         self.val_psnr = []
         
     def forward(self, x):
-        return self.model(x)
+        return self.model(x) / 2.
     
+    # TRAINING
     def training_step(self, batch, batch_idx):
         x, y = batch
         logits = self.forward(x)
@@ -63,6 +66,7 @@ class FSRCNN(pl.LightningModule):
         self.log('train_psnr', avg_psnr, prog_bar=True)
         self.psnr.clear()
         
+    # VALIDATION
     def validation_step(self, batch, batch_idx):
         x, y = batch
         logits = self.forward(x)
@@ -80,7 +84,10 @@ class FSRCNN(pl.LightningModule):
         avg_psnr = torch.stack(self.val_psnr).mean()
         self.log('val_psnr', avg_psnr, prog_bar=True)
         self.val_psnr.clear()
+
+    # TODO: TESTING
     
+    # UTILS
     def configure_optimizers(self):
         optim = torch.optim.RMSprop(self.model.parameters(), lr=config.LEARNING_RATE)
         scheduler = ReduceLROnPlateau(optim, mode='min', factor=0.5, patience=20, min_lr=10e-6, verbose=True)
@@ -111,3 +118,11 @@ class FSRCNN(pl.LightningModule):
 
         return [early_stopping, checkpoints]
     
+
+if __name__ == '__main__':
+    x = torch.randn(4, 3, config.CROP_DIM//config.SCALING_FACTOR, config.CROP_DIM//config.SCALING_FACTOR)
+    
+    model = FSRCNN()
+    logits = model.forward(x).detach()
+
+    print('x:', x.shape, 'logits:', logits.shape)

@@ -54,6 +54,7 @@ if __name__ == '__main__':
 
     ds = DIV2KDataset(config.train_dir)
     for lr, hr in ds:
+        print('lr:', lr.shape, 'hr:', hr.shape)
         plt.imshow(hr.permute(1, 2, 0).detach().numpy()+0.5)
         plt.show()
         plt.imshow(lr.permute(1, 2, 0).detach().numpy()+0.5)

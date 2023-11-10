@@ -13,7 +13,7 @@ transform = transforms.Compose([
     transforms.ColorJitter(0.4, 0.4, 0.6, 0.1)
 ])
 
-BATCH_SIZE = 4
+BATCH_SIZE = 16
 EPOCHS = 500
 LEARNING_RATE = 0.001
 

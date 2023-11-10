@@ -1,4 +1,4 @@
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 import lightning as pl
 import mlflow
 
