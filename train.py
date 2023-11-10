@@ -13,8 +13,8 @@ def train():
     train_ds = DIV2KDataset(config.train_dir, transform=config.transform)
     valid_ds = DIV2KDataset(config.valid_dir, transform=config.transform)
 
-    train_loader = DataLoader(train_ds, batch_size=config.BATCH_SIZE, num_workers=6, shuffle=True)
-    valid_loader = DataLoader(valid_ds, batch_size=config.BATCH_SIZE, num_workers=6, shuffle=False)
+    train_loader = DataLoader(train_ds, batch_size=config.BATCH_SIZE, num_workers=4, shuffle=True)
+    valid_loader = DataLoader(valid_ds, batch_size=config.BATCH_SIZE, num_workers=4, shuffle=False)
 
     trainer = pl.Trainer(max_epochs=config.EPOCHS)
 

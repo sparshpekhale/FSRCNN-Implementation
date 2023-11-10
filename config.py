@@ -16,6 +16,7 @@ transform = transforms.Compose([
 BATCH_SIZE = 16
 EPOCHS = 500
 LEARNING_RATE = 0.001
+DECONV_LEARNING_RATE = 0.0001
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 

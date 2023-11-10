@@ -1,3 +1,5 @@
+from math import sqrt
+
 import torch
 from torch import nn
 import lightning as pl
@@ -17,24 +19,25 @@ class FSRCNN(pl.LightningModule):
         
         self.model = nn.Sequential(
             nn.Conv2d(3, self.d, kernel_size=5, padding=5//2),
-            nn.ReLU(),
+            nn.PReLU(self.d),
             nn.Conv2d(self.d, self.s, kernel_size=1),
-            nn.ReLU()
+            nn.PReLU(self.s)
         )
         
         for _ in range(self.m):
             self.model.append(nn.Conv2d(self.s, self.s, kernel_size=3, padding=3//2)),
-            self.model.append(nn.ReLU())
+            self.model.append(nn.PReLU(self.s))
             
         self.model.append(nn.Conv2d(self.s, self.d, kernel_size=1))
-        self.model.append(nn.ReLU())
+        self.model.append(nn.PReLU(self.d))
         
-        self.model.append(nn.ConvTranspose2d(self.d, 3, kernel_size=9,stride=config.SCALING_FACTOR,
-                                          padding=9//2, output_padding=config.SCALING_FACTOR-1))
+        self.deconv = nn.ConvTranspose2d(self.d, 3, kernel_size=9,stride=config.SCALING_FACTOR,
+                            padding=9//2, output_padding=config.SCALING_FACTOR-1)
         
-        self.model.append(nn.Sigmoid())
-        
+        # Init weights
+        self.init_weights()
 
+        # Metrics
         self.mse_psnr = MSE_PSNR()
 
         # Logging
@@ -45,8 +48,23 @@ class FSRCNN(pl.LightningModule):
         self.val_psnr = []
         
     def forward(self, x):
-        return self.model(x) / 2.
+        x = self.model(x)
+        x = self.deconv(x)
+        x = F.sigmoid(x) / 2.
+        return x
     
+    # INIT WEIGHTS
+    def init_weights(self):
+        for m in self.model.modules():
+            if isinstance(m, nn.ConvTranspose2d):
+                # Conv Transpose -> Gaussian, mean=0, std=0.001
+                nn.init.normal_(m.weight.data, mean=0, std=0.001)
+                nn.init.zeros_(m.bias.data)
+            if isinstance(m, nn.Conv2d):
+                # Conv -> Kaiming He, mean=0, std=sqrt(2/num_nodes)
+                nn.init.normal_(m.weight.data, mean=0, std=sqrt(2/m.weight.data.numel()))
+                nn.init.zeros_(m.bias.data)
+
     # TRAINING
     def training_step(self, batch, batch_idx):
         x, y = batch
@@ -89,7 +107,13 @@ class FSRCNN(pl.LightningModule):
     
     # UTILS
     def configure_optimizers(self):
-        optim = torch.optim.RMSprop(self.model.parameters(), lr=config.LEARNING_RATE)
+        optim = torch.optim.RMSprop(
+            [
+                {"params": self.model.parameters(), "lr": config.LEARNING_RATE},
+                {"params": self.deconv.parameters(), "lr": config.DECONV_LEARNING_RATE}
+            ],
+            lr=config.LEARNING_RATE
+        )
         scheduler = ReduceLROnPlateau(optim, mode='min', factor=0.5, patience=20, min_lr=10e-6, verbose=True)
 
         return {
