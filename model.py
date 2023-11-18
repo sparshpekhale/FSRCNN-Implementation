@@ -14,8 +14,8 @@ class FSRCNN(pl.LightningModule):
     def __init__(self):
         super().__init__()
         
-        self.d, self.s, self.m = 32, 2, 2
-        # self.d, self.s, self.m = 56, 12, 4
+        # self.d, self.s, self.m = 32, 2, 2
+        self.d, self.s, self.m = 56, 12, 4
         
         self.model = nn.Sequential(
             nn.Conv2d(3, self.d, kernel_size=5, padding=5//2),
@@ -50,7 +50,7 @@ class FSRCNN(pl.LightningModule):
     def forward(self, x):
         x = self.model(x)
         x = self.deconv(x)
-        x = F.sigmoid(x) / 2.
+        # x = F.sigmoid(x) / 2.
         return x
     
     # INIT WEIGHTS

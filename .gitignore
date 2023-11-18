@@ -5,7 +5,7 @@ __pycache__
 data
 lightning_logs
 mlruns
-# checkpoints
+checkpoints
 
 tests
 training_files
